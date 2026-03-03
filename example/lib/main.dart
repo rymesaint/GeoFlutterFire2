@@ -10,11 +10,13 @@ import 'streambuilder_test.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(MaterialApp(
-    title: 'Geo Flutter Fire example',
-    home: MyApp(),
-    debugShowCheckedModeBanner: false,
-  ));
+  runApp(
+    MaterialApp(
+      title: 'Geo Flutter Fire example',
+      home: MyApp(),
+      debugShowCheckedModeBanner: false,
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -23,13 +25,13 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  GoogleMapController _mapController;
-  TextEditingController _latitudeController, _longitudeController;
+  GoogleMapController? _mapController;
+  late TextEditingController _latitudeController, _longitudeController;
 
   // firestore init
   final _firestore = FirebaseFirestore.instance;
-  GeoFlutterFire geo;
-  Stream<List<DocumentSnapshot>> stream;
+  late GeoFlutterFire geo;
+  late Stream<List<DocumentSnapshot>> stream;
   final radius = BehaviorSubject<double>.seeded(1.0);
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
 
@@ -43,9 +45,15 @@ class _MyAppState extends State<MyApp> {
     GeoFirePoint center = geo.point(latitude: 12.960632, longitude: 77.641603);
     stream = radius.switchMap((rad) {
       var collectionReference = _firestore.collection('locations');
-//          .where('name', isEqualTo: 'darshan');
-      return geo.collection(collectionRef: collectionReference).within(
-          center: center, radius: rad, field: 'position', strictMode: true);
+      //          .where('name', isEqualTo: 'darshan');
+      return geo
+          .collection(collectionRef: collectionReference)
+          .within(
+            center: center,
+            radius: rad,
+            field: 'position',
+            strictMode: true,
+          );
 
       /*
       ****Example to specify nested object****
@@ -82,14 +90,18 @@ class _MyAppState extends State<MyApp> {
                       _showHome();
                     },
               icon: Icon(Icons.home),
-            )
+            ),
           ],
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-              return StreamTestWidget();
-            }));
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) {
+                  return StreamTestWidget();
+                },
+              ),
+            );
           },
           child: Icon(Icons.navigate_next),
         ),
@@ -138,10 +150,11 @@ class _MyAppState extends State<MyApp> {
                       keyboardType: TextInputType.number,
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
-                          labelText: 'lat',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          )),
+                        labelText: 'lat',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     ),
                   ),
                   Container(
@@ -150,10 +163,11 @@ class _MyAppState extends State<MyApp> {
                       controller: _longitudeController,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                          labelText: 'lng',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          )),
+                        labelText: 'lng',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     ),
                   ),
                   MaterialButton(
@@ -167,7 +181,7 @@ class _MyAppState extends State<MyApp> {
                       'ADD',
                       style: TextStyle(color: Colors.white),
                     ),
-                  )
+                  ),
                 ],
               ),
               MaterialButton(
@@ -181,7 +195,7 @@ class _MyAppState extends State<MyApp> {
                   final lng = double.parse(_longitudeController.text);
                   _addNestedPoint(lat, lng);
                 },
-              )
+              ),
             ],
           ),
         ),
@@ -192,7 +206,7 @@ class _MyAppState extends State<MyApp> {
   void _onMapCreated(GoogleMapController controller) {
     setState(() {
       _mapController = controller;
-//      _showHome();
+      //      _showHome();
       //start listening after map is created
       stream.listen((List<DocumentSnapshot> documentList) {
         _updateMarkers(documentList);
@@ -201,34 +215,37 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _showHome() {
-    _mapController.animateCamera(CameraUpdate.newCameraPosition(
-      const CameraPosition(
-        target: LatLng(12.960632, 77.641603),
-        zoom: 15.0,
+    _mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        const CameraPosition(target: LatLng(12.960632, 77.641603), zoom: 15.0),
       ),
-    ));
+    );
   }
 
   void _addPoint(double lat, double lng) {
     GeoFirePoint geoFirePoint = geo.point(latitude: lat, longitude: lng);
     _firestore
         .collection('locations')
-        .add({'name': 'random name', 'position': geoFirePoint.data}).then((_) {
-      print('added ${geoFirePoint.hash} successfully');
-    });
+        .add({'name': 'random name', 'position': geoFirePoint.data})
+        .then((_) {
+          print('added ${geoFirePoint.hash} successfully');
+        });
   }
 
   //example to add geoFirePoint inside nested object
   void _addNestedPoint(double lat, double lng) {
     GeoFirePoint geoFirePoint = geo.point(latitude: lat, longitude: lng);
-    _firestore.collection('nestedLocations').add({
-      'name': 'random name',
-      'address': {
-        'location': {'position': geoFirePoint.data}
-      }
-    }).then((_) {
-      print('added ${geoFirePoint.hash} successfully');
-    });
+    _firestore
+        .collection('nestedLocations')
+        .add({
+          'name': 'random name',
+          'address': {
+            'location': {'position': geoFirePoint.data},
+          },
+        })
+        .then((_) {
+          print('added ${geoFirePoint.hash} successfully');
+        });
   }
 
   void _addMarker(double lat, double lng) {
@@ -246,7 +263,7 @@ class _MyAppState extends State<MyApp> {
 
   void _updateMarkers(List<DocumentSnapshot> documentList) {
     documentList.forEach((DocumentSnapshot document) {
-      Map<String, dynamic> snapData = document.data();
+      Map<String, dynamic> snapData = document.data() as Map<String, dynamic>;
       final GeoPoint point = snapData['position']['geopoint'];
       _addMarker(point.latitude, point.longitude);
     });
